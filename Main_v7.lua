@@ -1,5 +1,5 @@
 --========================================================--
---   SCRIPTBLOX INVISIBLE 8809 + FIXED TROLLER GUI
+--   ULTIMATE CLONE INVISIBLE + SAFE NO-DEATH OFF
 --========================================================--
 
 local Players = game:GetService("Players")
@@ -8,6 +8,8 @@ local UserInputService = game:GetService("UserInputService")
 local localPlayer = Players.LocalPlayer
 
 local isInvisible = false
+local fakeChar = nil
+local connection = nil
 
 local function toggleInvisibility()
     isInvisible = not isInvisible
@@ -17,32 +19,97 @@ local function toggleInvisibility()
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
     if isInvisible then
-        -- 1. Metode Invisible ON (ScriptBlox Method)
-        local position = char.HumanoidRootPart.Position
-        task.wait(0.1)
-        char:MoveTo(position + Vector3.new(0, 1000000, 0))
-        task.wait(0.1)
-        
         local rootPart = char:FindFirstChild("HumanoidRootPart")
-        if rootPart then
-            local humanoidrootpart = rootPart:Clone()
-            task.wait(0.1)
-            rootPart:Destroy()
-            humanoidrootpart.Parent = char
-            char:MoveTo(position)
+        local savedPos = rootPart.CFrame
+
+        -- 1. Buat klon karakter di atas sebagai badan visual kamu sendiri (supaya bisa jalan & nembak)
+        char.Archivable = true
+        fakeChar = char:Clone()
+        fakeChar.Name = "InvisClone"
+        fakeChar.Parent = workspace
+        char.Archivable = false
+
+        -- Matikan script di klon biar gak bentrok
+        for _, v in pairs(fakeChar:GetDescendants()) do
+            if v:IsA("LocalScript") or v:IsA("Script") then
+                v:Destroy()
+            elseif v:IsA("BasePart") then
+                v.Transparency = 0.5 -- Set agak transparan buat layar kamu sendiri (0 = tak terlihat di musuh/cermin)
+                v.CanCollide = false
+            end
         end
-        
+
+        local cloneRoot = fakeChar:FindFirstChild("HumanoidRootPart")
+        if cloneRoot then
+            cloneRoot.CFrame = savedPos
+        end
+        workspace.CurrentCamera.CameraSubject = fakeChar:FindFirstChildOfClass("Humanoid")
+
+        -- 2. Pindahkan badan asli ke bawah tanah (Void) agar aman dan tersembunyi dari player lain
+        rootPart.CFrame = savedPos + Vector3.new(0, -10000, 0)
+
+        -- Sembunyikan total badan asli
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") or v:IsA("Decal") then
+                v.Transparency = 1
+            elseif v:IsA("Accessory") then
+                local h = v:FindFirstChild("Handle")
+                if h then h.Transparency = 1 end
+            end
+        end
+
+        -- 3. Sinkronisasi pergerakan badan asli di bawah mengikuti klon di atas
+        connection = RunService.RenderStepped:Connect(function()
+            if fakeChar and fakeChar:FindFirstChild("HumanoidRootPart") and rootPart and rootPart.Parent then
+                local cRoot = fakeChar.HumanoidRootPart
+                local cHum = fakeChar:FindFirstChildOfClass("Humanoid")
+                local realHum = char:FindFirstChildOfClass("Humanoid")
+
+                rootPart.CFrame = cRoot.CFrame + Vector3.new(0, -10000, 0)
+                rootPart.Velocity = cRoot.Velocity
+
+                if realHum and cHum then
+                    cHum:Move(realHum.MoveDirection, false)
+                    if realHum.Jump then
+                        cHum.Jump = true
+                    end
+                end
+            end
+        end)
+
         pcall(function()
-            game.StarterGui:SetCore("SendNotification", { Title = "Invisible: ON"; Duration = 1; Text = "Active & Hidden"; })
+            game.StarterGui:SetCore("SendNotification", { Title = "Invisible: ON"; Duration = 1; Text = "Clone Mode Active"; })
         end)
     else
-        -- 2. Metode Invisible OFF (Safe Reset agar karakter kembali normal)
-        if char then
-            char:BreakJoints()
+        -- KETIKA OFF: Hancurkan klon, kembalikan kamera ke badan asli, TANPA MATI!
+        if connection then
+            connection:Disconnect()
+            connection = nil
         end
-        
+
+        if fakeChar then
+            local cloneRoot = fakeChar:FindFirstChild("HumanoidRootPart")
+            if cloneRoot and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = cloneRoot.CFrame -- Kembalikan posisi asli persis di tempat klon terakhir berdiri
+            end
+            fakeChar:Destroy()
+            fakeChar = nil
+        end
+
+        workspace.CurrentCamera.CameraSubject = char:FindFirstChildOfClass("Humanoid")
+
+        -- Kembalikan transparansi badan asli jadi terlihat lagi
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") or v:IsA("Decal") then
+                v.Transparency = 0
+            elseif v:IsA("Accessory") then
+                local h = v:FindFirstChild("Handle")
+                if h then h.Transparency = 0 end
+            end
+        end
+
         pcall(function()
-            game.StarterGui:SetCore("SendNotification", { Title = "Invisible: OFF"; Duration = 1; Text = "Restoring Character"; })
+            game.StarterGui:SetCore("SendNotification", { Title = "Invisible: OFF"; Duration = 1; Text = "Back to Normal (No Death)"; })
         end)
     end
 end
@@ -126,7 +193,7 @@ memedog.BackgroundTransparency = 1
 memedog.Position = UDim2.new(0.04, 0, 0.58, 0)
 memedog.Size = UDim2.new(0, 200, 0, 23)
 memedog.Font = Enum.Font.SourceSansLight
-memedog.Text = "Fixed GUI & ScriptBlox"
+memedog.Text = "Clone Sync Method"
 memedog.TextColor3 = Color3.fromRGB(0, 255, 0)
 memedog.TextSize = 14
 
@@ -136,7 +203,7 @@ die.BackgroundTransparency = 1
 die.Position = UDim2.new(0.01, 0, 0.72, 0)
 die.Size = UDim2.new(0, 246, 0, 23)
 die.Font = Enum.Font.SourceSansLight
-die.Text = "Safe Reset OFF"
+die.Text = "No Death on OFF"
 die.TextColor3 = Color3.fromRGB(0, 255, 255)
 die.TextSize = 14
 
