@@ -1,5 +1,5 @@
 --========================================================--
---   SCRIPTBLOX INVISIBLE 8809 + NO-DEATH OFF FIX
+--   SCRIPTBLOX INVISIBLE + SAFE RESET OFF FIX
 --========================================================--
 
 local Players = game:GetService("Players")
@@ -17,7 +17,7 @@ local function toggleInvisibility()
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
     if isInvisible then
-        -- 1. Metode Invisible ON (ScriptBlox Method)
+        -- 1. Metode Invisible ON (ScriptBlox Method - Hilang di server/player lain)
         local position = char.HumanoidRootPart.Position
         task.wait(0.1)
         char:MoveTo(position + Vector3.new(0, 1000000, 0))
@@ -36,20 +36,14 @@ local function toggleInvisibility()
             game.StarterGui:SetCore("SendNotification", { Title = "Invisible: ON"; Duration = 1; Text = "Active & Hidden"; })
         end)
     else
-        -- 2. Metode Invisible OFF (Tanpa Mati / Cukup Reset Transparansi & Posisi)
-        -- Jika ingin kembali normal tanpa harus mati total, kita kembalikan part tubuh jadi terlihat
-        for _, v in pairs(char:GetDescendants()) do
-            if v:IsA("BasePart") or v:IsA("Decal") then
-                v.Transparency = 0
-            elseif v:IsA("Accessory") then
-                local h = v:FindFirstChild("Handle")
-                if h then h.Transparency = 0 end
-            end
+        -- 2. Metode Invisible OFF (Safe Reset agar posisi, emote, & animasi kembali normal 100%)
+        -- Karena bagian root part di-destroy saat ON, cara terpasti agar tidak nyangkut/melayang adalah me-reset karakter dengan bersih
+        if char then
+            char:BreakJoints()
         end
         
-        -- Memunculkan notifikasi bahwa mode invis sudah mati
         pcall(function()
-            game.StarterGui:SetCore("SendNotification", { Title = "Invisible: OFF"; Duration = 1; Text = "Back to Normal"; })
+            game.StarterGui:SetCore("SendNotification", { Title = "Invisible: OFF"; Duration = 1; Text = "Restoring Character"; })
         end)
     end
 end
@@ -133,7 +127,7 @@ memedog.BackgroundTransparency = 1
 memedog.Position = UDim2.new(0.04, 0, 0.58, 0)
 memedog.Size = UDim2.new(0, 200, 0, 23)
 memedog.Font = Enum.Font.SourceSansLight
-memedog.Text = "No-Death Off Fix"
+memedog.Text = "Safe Reset OFF Fix"
 memedog.TextColor3 = Color3.fromRGB(0, 255, 0)
 memedog.TextSize = 14
 
@@ -143,9 +137,9 @@ die.BackgroundTransparency = 1
 die.Position = UDim2.new(0.01, 0, 0.72, 0)
 die.Size = UDim2.new(0, 246, 0, 23)
 die.Font = Enum.Font.SourceSansLight
-die.Text = "Smooth Toggle"
+die.Text = "Clean Emote & Movement"
 die.TextColor3 = Color3.fromRGB(0, 255, 255)
-die.TextSize = 14
+die.TextSize, 14 = 14, nil
 
 axy.Name = "axy"
 axy.Parent = Main
