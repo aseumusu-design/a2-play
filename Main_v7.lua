@@ -1,5 +1,5 @@
 --========================================================--
---   SCRIPTBLOX INVISIBLE + SAFE RESET OFF FIX
+--   SCRIPTBLOX INVISIBLE 8809 + FIXED TROLLER GUI
 --========================================================--
 
 local Players = game:GetService("Players")
@@ -17,7 +17,7 @@ local function toggleInvisibility()
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
     if isInvisible then
-        -- 1. Metode Invisible ON (ScriptBlox Method - Hilang di server/player lain)
+        -- 1. Metode Invisible ON (ScriptBlox Method)
         local position = char.HumanoidRootPart.Position
         task.wait(0.1)
         char:MoveTo(position + Vector3.new(0, 1000000, 0))
@@ -36,8 +36,7 @@ local function toggleInvisibility()
             game.StarterGui:SetCore("SendNotification", { Title = "Invisible: ON"; Duration = 1; Text = "Active & Hidden"; })
         end)
     else
-        -- 2. Metode Invisible OFF (Safe Reset agar posisi, emote, & animasi kembali normal 100%)
-        -- Karena bagian root part di-destroy saat ON, cara terpasti agar tidak nyangkut/melayang adalah me-reset karakter dengan bersih
+        -- 2. Metode Invisible OFF (Safe Reset agar karakter kembali normal)
         if char then
             char:BreakJoints()
         end
@@ -127,7 +126,7 @@ memedog.BackgroundTransparency = 1
 memedog.Position = UDim2.new(0.04, 0, 0.58, 0)
 memedog.Size = UDim2.new(0, 200, 0, 23)
 memedog.Font = Enum.Font.SourceSansLight
-memedog.Text = "Safe Reset OFF Fix"
+memedog.Text = "Fixed GUI & ScriptBlox"
 memedog.TextColor3 = Color3.fromRGB(0, 255, 0)
 memedog.TextSize = 14
 
@@ -137,9 +136,9 @@ die.BackgroundTransparency = 1
 die.Position = UDim2.new(0.01, 0, 0.72, 0)
 die.Size = UDim2.new(0, 246, 0, 23)
 die.Font = Enum.Font.SourceSansLight
-die.Text = "Clean Emote & Movement"
+die.Text = "Safe Reset OFF"
 die.TextColor3 = Color3.fromRGB(0, 255, 255)
-die.TextSize, 14 = 14, nil
+die.TextSize = 14
 
 axy.Name = "axy"
 axy.Parent = Main
