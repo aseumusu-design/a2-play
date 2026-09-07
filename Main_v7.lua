@@ -1,5 +1,5 @@
 --========================================================--
---   ULTIMATE CLONE INVISIBLE + SAFE NO-DEATH OFF
+--   ULTIMATE CLONE INVISIBLE V2 (FIX POSISI JONGKOK/NYANGKUT)
 --========================================================--
 
 local Players = game:GetService("Players")
@@ -20,9 +20,10 @@ local function toggleInvisibility()
 
     if isInvisible then
         local rootPart = char:FindFirstChild("HumanoidRootPart")
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
         local savedPos = rootPart.CFrame
 
-        -- 1. Buat klon karakter di atas sebagai badan visual kamu sendiri (supaya bisa jalan & nembak)
+        -- 1. Buat klon karakter di atas sebagai badan visual kamu sendiri
         char.Archivable = true
         fakeChar = char:Clone()
         fakeChar.Name = "InvisClone"
@@ -34,19 +35,24 @@ local function toggleInvisibility()
             if v:IsA("LocalScript") or v:IsA("Script") then
                 v:Destroy()
             elseif v:IsA("BasePart") then
-                v.Transparency = 0.5 -- Set agak transparan buat layar kamu sendiri (0 = tak terlihat di musuh/cermin)
+                v.Transparency = 0.5 -- Set agak transparan buat layar kamu sendiri
                 v.CanCollide = false
             end
         end
 
         local cloneRoot = fakeChar:FindFirstChild("HumanoidRootPart")
+        local cloneHum = fakeChar:FindFirstChildOfClass("Humanoid")
         if cloneRoot then
             cloneRoot.CFrame = savedPos
         end
-        workspace.CurrentCamera.CameraSubject = fakeChar:FindFirstChildOfClass("Humanoid")
+        workspace.CurrentCamera.CameraSubject = cloneHum
 
-        -- 2. Pindahkan badan asli ke bawah tanah (Void) agar aman dan tersembunyi dari player lain
+        -- 2. Pindahkan badan asli ke bawah tanah dengan aman & cegah jongkok/nyangkut
+        if humanoid then
+            humanoid.PlatformStand = true
+        end
         rootPart.CFrame = savedPos + Vector3.new(0, -10000, 0)
+        rootPart.Anchored = true -- Kunci agar tidak jatuh atau ketarik gravitasi
 
         -- Sembunyikan total badan asli
         for _, v in pairs(char:GetDescendants()) do
@@ -58,19 +64,15 @@ local function toggleInvisibility()
             end
         end
 
-        -- 3. Sinkronisasi pergerakan badan asli di bawah mengikuti klon di atas
+        -- 3. Sinkronisasi pergerakan mulus
         connection = RunService.RenderStepped:Connect(function()
             if fakeChar and fakeChar:FindFirstChild("HumanoidRootPart") and rootPart and rootPart.Parent then
                 local cRoot = fakeChar.HumanoidRootPart
                 local cHum = fakeChar:FindFirstChildOfClass("Humanoid")
-                local realHum = char:FindFirstChildOfClass("Humanoid")
 
-                rootPart.CFrame = cRoot.CFrame + Vector3.new(0, -10000, 0)
-                rootPart.Velocity = cRoot.Velocity
-
-                if realHum and cHum then
-                    cHum:Move(realHum.MoveDirection, false)
-                    if realHum.Jump then
+                if humanoid and cHum then
+                    cHum:Move(humanoid.MoveDirection, false)
+                    if humanoid.Jump then
                         cHum.Jump = true
                     end
                 end
@@ -78,27 +80,37 @@ local function toggleInvisibility()
         end)
 
         pcall(function()
-            game.StarterGui:SetCore("SendNotification", { Title = "Invisible: ON"; Duration = 1; Text = "Clone Mode Active"; })
+            game.StarterGui:SetCore("SendNotification", { Title = "Invisible: ON"; Duration = 1; Text = "Clone Fixed Active"; })
         end)
     else
-        -- KETIKA OFF: Hancurkan klon, kembalikan kamera ke badan asli, TANPA MATI!
+        -- KETIKA OFF: Lepaskan kuncian, kembalikan posisi, hapus klon TANPA MATI!
         if connection then
             connection:Disconnect()
             connection = nil
         end
 
+        local rootPart = char:FindFirstChild("HumanoidRootPart")
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+
+        if rootPart then
+            rootPart.Anchored = false
+        end
+        if humanoid then
+            humanoid.PlatformStand = false
+        end
+
         if fakeChar then
             local cloneRoot = fakeChar:FindFirstChild("HumanoidRootPart")
-            if cloneRoot and char:FindFirstChild("HumanoidRootPart") then
-                char.HumanoidRootPart.CFrame = cloneRoot.CFrame -- Kembalikan posisi asli persis di tempat klon terakhir berdiri
+            if cloneRoot and rootPart then
+                rootPart.CFrame = cloneRoot.CFrame
             end
             fakeChar:Destroy()
             fakeChar = nil
         end
 
-        workspace.CurrentCamera.CameraSubject = char:FindFirstChildOfClass("Humanoid")
+        workspace.CurrentCamera.CameraSubject = humanoid
 
-        -- Kembalikan transparansi badan asli jadi terlihat lagi
+        -- Kembalikan transparansi badan asli jadi normal
         for _, v in pairs(char:GetDescendants()) do
             if v:IsA("BasePart") or v:IsA("Decal") then
                 v.Transparency = 0
@@ -109,7 +121,7 @@ local function toggleInvisibility()
         end
 
         pcall(function()
-            game.StarterGui:SetCore("SendNotification", { Title = "Invisible: OFF"; Duration = 1; Text = "Back to Normal (No Death)"; })
+            game.StarterGui:SetCore("SendNotification", { Title = "Invisible: OFF"; Duration = 1; Text = "Back to Normal"; })
         end)
     end
 end
@@ -170,10 +182,10 @@ invisBtn.MouseButton1Click:Connect(function()
     toggleInvisibility()
     if isInvisible then
         invisBtn.Text = "Invis: ON"
-        invisBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113) -- Hijau
+        invisBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
     else
         invisBtn.Text = "Invis: OFF"
-        invisBtn.BackgroundColor3 = Color3.fromRGB(255, 138, 42) -- Oranye
+        invisBtn.BackgroundColor3 = Color3.fromRGB(255, 138, 42)
     end
 end)
 
@@ -193,7 +205,7 @@ memedog.BackgroundTransparency = 1
 memedog.Position = UDim2.new(0.04, 0, 0.58, 0)
 memedog.Size = UDim2.new(0, 200, 0, 23)
 memedog.Font = Enum.Font.SourceSansLight
-memedog.Text = "Clone Sync Method"
+memedog.Text = "Clone Fix V2"
 memedog.TextColor3 = Color3.fromRGB(0, 255, 0)
 memedog.TextSize = 14
 
@@ -203,7 +215,7 @@ die.BackgroundTransparency = 1
 die.Position = UDim2.new(0.01, 0, 0.72, 0)
 die.Size = UDim2.new(0, 246, 0, 23)
 die.Font = Enum.Font.SourceSansLight
-die.Text = "No Death on OFF"
+die.Text = "No Glitch / Crouch"
 die.TextColor3 = Color3.fromRGB(0, 255, 255)
 die.TextSize = 14
 
